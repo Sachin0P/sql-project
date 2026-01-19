@@ -22,6 +22,8 @@ func main() {
 	http.HandleFunc("/student", studentDashboard)
 	http.HandleFunc("/add-student", addStudent)
 	http.HandleFunc("/add-complaint", addComplaint)
+	http.HandleFunc("/logout", logout)
+	http.HandleFunc("/update-status", updateComplaintStatus)
 
 	log.Println("Server running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)

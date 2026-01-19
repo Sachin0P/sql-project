@@ -34,9 +34,16 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		).Scan(&id)
 
 		if err == nil {
+			http.SetCookie(w, &http.Cookie{
+				Name:  "admin",
+				Value: "true",
+				Path:  "/",
+			})
+
 			http.Redirect(w, r, "/admin", http.StatusSeeOther)
 			return
 		}
+
 	}
 
 	if role == "student" {
@@ -60,7 +67,18 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte("Invalid login credentials"))
 }
+
 func adminDashboard(w http.ResponseWriter, r *http.Request) {
+	// STEP D2: Admin access check
+	_, err := r.Cookie("admin")
+	if err != nil {
+		// No admin cookie → not logged in as admin
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// ---- EXISTING CODE CONTINUES BELOW ----
+
 	rows, err := db.Query(`
 		SELECT c.id, s.name, s.roll_no, s.room_no,
 		       c.title, c.description, c.status
@@ -95,8 +113,50 @@ func adminDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func studentDashboard(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "templates/student.html")
+	_, err := r.Cookie("student_id")
+	cookie, err := r.Cookie("student_id")
+	if _, err := r.Cookie("admin"); err == nil {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	rows, err := db.Query(`
+		SELECT id, title, description, status
+		FROM complaints
+		WHERE student_id = ?
+		ORDER BY created_at DESC
+	`, cookie.Value)
+
+	if err != nil {
+		w.Write([]byte("Error loading complaints"))
+		return
+	}
+	defer rows.Close()
+
+	type StudentComplaint struct {
+		ID          int
+		Title       string
+		Description string
+		Status      string
+	}
+
+	var complaints []StudentComplaint
+
+	for rows.Next() {
+		var c StudentComplaint
+		rows.Scan(&c.ID, &c.Title, &c.Description, &c.Status)
+		complaints = append(complaints, c)
+	}
+
+	tmpl := template.Must(template.ParseFiles("templates/student.html"))
+	tmpl.Execute(w, complaints)
 }
+
 func addStudent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
@@ -150,4 +210,38 @@ func addComplaint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/student", http.StatusSeeOther)
+}
+func logout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   "student_id",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:   "admin",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func updateComplaintStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+
+	id := r.FormValue("id")
+	status := r.FormValue("status")
+
+	db.Exec(
+		"UPDATE complaints SET status=? WHERE id=?",
+		status, id,
+	)
+
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }
