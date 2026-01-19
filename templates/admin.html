@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<h2>Admin Dashboard</h2>
+
+<h3>Register Student</h3>
+
+<form method="POST" action="/add-student">
+    <input name="name" placeholder="Student Name" required>
+    <input name="roll" placeholder="Roll Number" required>
+    <input name="room" placeholder="Room Number" required>
+    <input name="username" placeholder="Username" required>
+    <input name="password" placeholder="Password" required>
+    <button type="submit">Add Student</button>
+</form>
+<hr>
+
+<h3>Complaints</h3>
+
+<table border="1" cellpadding="5">
+    <tr>
+        <th>ID</th>
+        <th>Student</th>
+        <th>Roll No</th>
+        <th>Room</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Status</th>
+    </tr>
+
+    {{range .}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.StudentName}}</td>
+        <td>{{.RollNo}}</td>
+        <td>{{.RoomNo}}</td>
+        <td>{{.Title}}</td>
+        <td>{{.Description}}</td>
+        <td>{{.Status}}</td>
+    </tr>
+    {{else}}
+    <tr>
+        <td colspan="7">No complaints found</td>
+    </tr>
+    {{end}}
+</table>
+
+</body>
+</html>
