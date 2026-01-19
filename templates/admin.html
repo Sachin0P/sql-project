@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html>
+<a href="/logout">Logout</a>
+<hr>
+
 <head>
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
@@ -23,6 +26,8 @@
 <h3>Complaints</h3>
 
 <table border="1" cellpadding="5">
+
+
     <tr>
         <th>ID</th>
         <th>Student</th>
@@ -31,9 +36,13 @@
         <th>Title</th>
         <th>Description</th>
         <th>Status</th>
+        <th>Update Status</th>
+
     </tr>
 
     {{range .}}
+
+
     <tr>
         <td>{{.ID}}</td>
         <td>{{.StudentName}}</td>
@@ -42,6 +51,20 @@
         <td>{{.Title}}</td>
         <td>{{.Description}}</td>
         <td>{{.Status}}</td>
+        <td>
+            <form method="POST" action="/update-status">
+                <input type="hidden" name="id" value="{{.ID}}">
+
+                <select name="status">
+                    <option>Pending</option>
+                    <option>In Progress</option>
+                    <option>Resolved</option>
+                </select>
+
+                <button type="submit">Update</button>
+            </form>
+        </td>
+
     </tr>
     {{else}}
     <tr>
