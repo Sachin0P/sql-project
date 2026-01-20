@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -14,6 +15,18 @@ type ComplaintView struct {
 	Title       string
 	Description string
 	Status      string
+}
+type StudentView struct {
+	ID       int
+	Name     string
+	RollNo   string
+	RoomNo   string
+	Username string
+	Password string
+}
+type AdminPageData struct {
+	Complaints []ComplaintView
+	Students   []StudentView
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,47 +82,87 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminDashboard(w http.ResponseWriter, r *http.Request) {
-	// STEP D2: Admin access check
-	_, err := r.Cookie("admin")
-	if err != nil {
-		// No admin cookie → not logged in as admin
+	// Admin access check (STEP D2)
+	if _, err := r.Cookie("admin"); err != nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
-	// ---- EXISTING CODE CONTINUES BELOW ----
+	// ------------------ FETCH COMPLAINTS ------------------
 
-	rows, err := db.Query(`
+	cRows, err := db.Query(`
 		SELECT c.id, s.name, s.roll_no, s.room_no,
 		       c.title, c.description, c.status
 		FROM complaints c
-		JOIN students s ON c.student_id = s.id
+		LEFT JOIN students s ON c.student_id = s.id
 		ORDER BY c.created_at DESC
 	`)
 	if err != nil {
 		w.Write([]byte("Error loading complaints"))
 		return
 	}
-	defer rows.Close()
+	defer cRows.Close()
 
 	var complaints []ComplaintView
 
-	for rows.Next() {
+	for cRows.Next() {
 		var c ComplaintView
-		rows.Scan(
+		var name, roll, room sql.NullString
+
+		cRows.Scan(
 			&c.ID,
-			&c.StudentName,
-			&c.RollNo,
-			&c.RoomNo,
+			&name,
+			&roll,
+			&room,
 			&c.Title,
 			&c.Description,
 			&c.Status,
 		)
+
+		c.StudentName = name.String
+		c.RollNo = roll.String
+		c.RoomNo = room.String
+
 		complaints = append(complaints, c)
 	}
 
+	// ------------------ FETCH STUDENTS ------------------
+
+	sRows, err := db.Query(`
+		SELECT id, name, roll_no, room_no, username, password
+		FROM students
+		ORDER BY id
+	`)
+	if err != nil {
+		w.Write([]byte("Error loading students"))
+		return
+	}
+	defer sRows.Close()
+
+	var students []StudentView
+
+	for sRows.Next() {
+		var s StudentView
+		sRows.Scan(
+			&s.ID,
+			&s.Name,
+			&s.RollNo,
+			&s.RoomNo,
+			&s.Username,
+			&s.Password,
+		)
+		students = append(students, s)
+	}
+
+	// ------------------ SEND TO TEMPLATE ------------------
+
+	data := AdminPageData{
+		Complaints: complaints,
+		Students:   students,
+	}
+
 	tmpl := template.Must(template.ParseFiles("templates/admin.html"))
-	tmpl.Execute(w, complaints)
+	tmpl.Execute(w, data)
 }
 
 func studentDashboard(w http.ResponseWriter, r *http.Request) {

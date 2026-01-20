@@ -42,7 +42,8 @@
 
     </tr>
 
-    {{range .}}
+    {{range .Complaints}}
+
 
 
     <tr>
@@ -79,6 +80,34 @@
     {{else}}
     <tr>
         <td colspan="7">No complaints found</td>
+    </tr>
+    {{end}}
+</table>
+<hr>
+<h3>All Students</h3>
+
+<table border="1" cellpadding="5">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Roll No</th>
+        <th>Room</th>
+        <th>Username</th>
+        <th>Password</th>
+    </tr>
+
+    {{range .Students}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.Name}}</td>
+        <td>{{.RollNo}}</td>
+        <td>{{.RoomNo}}</td>
+        <td>{{.Username}}</td>
+        <td>{{.Password}}</td>
+    </tr>
+    {{else}}
+    <tr>
+        <td colspan="6">No students found</td>
     </tr>
     {{end}}
 </table>
