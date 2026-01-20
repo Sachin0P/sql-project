@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -361,4 +362,47 @@ func deleteStudent(w http.ResponseWriter, r *http.Request) {
 	db.Exec("DELETE FROM students WHERE id = ?", studentID)
 
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+}
+func exportStudentsCSV(w http.ResponseWriter, r *http.Request) {
+	// Admin check
+	if _, err := r.Cookie("admin"); err != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	rows, err := db.Query(`
+		SELECT id, name, roll_no, room_no, username, password
+		FROM students
+		ORDER BY id
+	`)
+	if err != nil {
+		w.Write([]byte("Error exporting students"))
+		return
+	}
+	defer rows.Close()
+
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", "attachment; filename=students.csv")
+
+	writer := csv.NewWriter(w)
+	defer writer.Flush()
+
+	// CSV header
+	writer.Write([]string{
+		"ID", "Name", "Roll No", "Room", "Username", "Password",
+	})
+
+	for rows.Next() {
+		var s StudentView
+		rows.Scan(&s.ID, &s.Name, &s.RollNo, &s.RoomNo, &s.Username, &s.Password)
+
+		writer.Write([]string{
+			strconv.Itoa(s.ID),
+			s.Name,
+			s.RollNo,
+			s.RoomNo,
+			s.Username,
+			s.Password,
+		})
+	}
 }
