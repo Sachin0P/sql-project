@@ -26,6 +26,7 @@ func main() {
 	http.HandleFunc("/update-status", updateComplaintStatus)
 	http.HandleFunc("/delete-complaint", deleteComplaint)
 	http.HandleFunc("/delete-student", deleteStudent)
+	http.HandleFunc("/export-students", exportStudentsCSV)
 
 	log.Println("Server running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
