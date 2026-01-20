@@ -245,3 +245,26 @@ func updateComplaintStatus(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }
+func deleteComplaint(w http.ResponseWriter, r *http.Request) {
+	// Allow only POST
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+
+	// Admin check (important)
+	if _, err := r.Cookie("admin"); err != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	id := r.FormValue("id")
+
+	_, err := db.Exec("DELETE FROM complaints WHERE id = ?", id)
+	if err != nil {
+		w.Write([]byte("Error deleting complaint"))
+		return
+	}
+
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+}
