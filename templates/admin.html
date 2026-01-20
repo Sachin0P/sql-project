@@ -84,6 +84,15 @@
     {{end}}
 </table>
 <hr>
+<h4>Search Student by Roll Number</h4>
+
+<form method="GET" action="/admin">
+    <input name="roll_search" placeholder="Enter Roll Number">
+    <button type="submit">Search</button>
+</form>
+
+<hr>
+
 <h3>All Students</h3>
 
 <table border="1" cellpadding="5">
@@ -94,6 +103,8 @@
         <th>Room</th>
         <th>Username</th>
         <th>Password</th>
+        <th>Delete</th>
+
     </tr>
 
     {{range .Students}}
@@ -104,6 +115,14 @@
         <td>{{.RoomNo}}</td>
         <td>{{.Username}}</td>
         <td>{{.Password}}</td>
+        <td>
+            <form method="POST" action="/delete-student"
+                  onsubmit="return confirm('Delete student and all complaints?');">
+                <input type="hidden" name="id" value="{{.ID}}">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
+
     </tr>
     {{else}}
     <tr>
