@@ -128,11 +128,29 @@ func adminDashboard(w http.ResponseWriter, r *http.Request) {
 
 	// ------------------ FETCH STUDENTS ------------------
 
-	sRows, err := db.Query(`
+	rollSearch := r.URL.Query().Get("roll_search")
+
+	var sRows *sql.Rows
+
+	if rollSearch != "" {
+		sRows, err = db.Query(`
+		SELECT id, name, roll_no, room_no, username, password
+		FROM students
+		WHERE roll_no LIKE ?
+	`, "%"+rollSearch+"%")
+	} else {
+		sRows, err = db.Query(`
 		SELECT id, name, roll_no, room_no, username, password
 		FROM students
 		ORDER BY id
 	`)
+	}
+
+	if err != nil {
+		w.Write([]byte("Error loading students"))
+		return
+	}
+
 	if err != nil {
 		w.Write([]byte("Error loading students"))
 		return
@@ -318,6 +336,29 @@ func deleteComplaint(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error deleting complaint"))
 		return
 	}
+
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+}
+func deleteStudent(w http.ResponseWriter, r *http.Request) {
+	// Only POST allowed
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+
+	// Admin check
+	if _, err := r.Cookie("admin"); err != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	studentID := r.FormValue("id")
+
+	// First delete complaints of the student
+	db.Exec("DELETE FROM complaints WHERE student_id = ?", studentID)
+
+	// Then delete the student
+	db.Exec("DELETE FROM students WHERE id = ?", studentID)
 
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }
