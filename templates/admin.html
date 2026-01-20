@@ -37,6 +37,8 @@
         <th>Description</th>
         <th>Status</th>
         <th>Update Status</th>
+        <th>Delete</th>
+
 
     </tr>
 
@@ -64,6 +66,14 @@
                 <button type="submit">Update</button>
             </form>
         </td>
+        <td>
+            <form method="POST" action="/delete-complaint"
+                  onsubmit="return confirm('Are you sure you want to delete this complaint?');">
+                <input type="hidden" name="id" value="{{.ID}}">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
+
 
     </tr>
     {{else}}
